@@ -84,7 +84,7 @@ def test_login_verification_names_what_is_missing_or_wrong(client) -> None:
     }
 
 
-def test_calling_the_api_creates_no_sessions(client, account_form) -> None:
+def test_calling_the_api_creates_no_sessions(app, client, account_form) -> None:
     """The API door is stateless, and the session store shows it.
 
     Every call carries what it needs in its own body, so there is no visitor to
@@ -98,5 +98,5 @@ def test_calling_the_api_creates_no_sessions(client, account_form) -> None:
         assert client.get("/api/productsList").status_code == 200
     assert client.post("/api/createAccount", data=account_form).json()["responseCode"] == 201
 
-    assert client.app.state.sessions.count() == 0
+    assert app.state.sessions.count() == 0
     assert not client.cookies

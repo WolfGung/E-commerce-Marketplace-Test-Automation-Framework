@@ -2,7 +2,7 @@
 
 The Setup block in the README is the first command anybody runs here, and it
 was installing `.[dev]` while the suite could not so much as collect without
-`.[stand]`: `tests/stand/conftest.py` imports `fastapi.testclient`,
+`.[stand]`: `tests/stand/conftest.py` serves the stand with uvicorn,
 `tests/stand/test_pages_contract.py` imports `selectolax`, and the
 `local_stand` fixture in `tests/conftest.py` imports uvicorn and
 `stand.app.main`. A first run that ends in a collection error is a first
