@@ -8,16 +8,16 @@ browser test with a timeout.
 from __future__ import annotations
 
 import pytest
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser
 
 from stand.app.catalog import PRODUCTS
 
 pytestmark = pytest.mark.stand
 
 
-def _dom(response) -> HTMLParser:
+def _dom(response) -> LexborHTMLParser:
     assert response.status_code == 200, response.text[:200]
-    return HTMLParser(response.text)
+    return LexborHTMLParser(response.text)
 
 
 def test_the_home_page_carries_the_logo_and_the_login_link(client) -> None:
@@ -210,7 +210,7 @@ def test_a_signup_finished_for_a_taken_email_is_refused_rather_than_claimed(clie
     )
 
     assert response.status_code == 400
-    dom = HTMLParser(response.text)
+    dom = LexborHTMLParser(response.text)
     assert dom.css_first("[data-qa='account-created']") is None
     signup_form = next(form for form in dom.css("form") if "Signup" in form.text())
     assert signup_form.css_first("p").text(strip=True) == "Email Address already exist!"
