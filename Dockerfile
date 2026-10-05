@@ -25,7 +25,7 @@ COPY tests ./tests
 #   scripts/    read and run by `tests/unit/test_build_showcase_script.py`.
 #   stand/      imported by tests/stand and by the local_stand fixture;
 #               pytest collects tests/stand before -m selects anything.
-#   .github/    tests/unit/test_ci_targets.py reads ci.yml straight off disk
+#   .github/    tests/unit/test_ci_targets.py reads ci.yml and drift.yml off disk
 #               to check the pipeline's own shape.
 #   Makefile    read by tests/unit/test_setup_instructions.py, which holds the
 #               README's install line to the one `make install` runs.

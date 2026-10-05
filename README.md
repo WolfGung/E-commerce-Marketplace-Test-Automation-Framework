@@ -2,7 +2,7 @@
 
 A test automation framework built from scratch for an online shop: API and browser tests run in CI against a stand shipped in this repository.
 
-[![CI](https://github.com/WolfGung/Marketplace-Test-Automation-Framework/actions/workflows/ci.yml/badge.svg)](https://github.com/WolfGung/Marketplace-Test-Automation-Framework/actions/workflows/ci.yml)
+[![CI](https://github.com/WolfGung/Marketplace-Test-Automation-Framework/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/WolfGung/Marketplace-Test-Automation-Framework/actions/workflows/ci.yml?query=branch%3Amain+event%3Apush)
 [![live report](https://img.shields.io/badge/live%20report-Allure-brightgreen)](https://wolfgung.github.io/Marketplace-Test-Automation-Framework/report/)
 [![python](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -25,7 +25,7 @@ The rows above the stand's are the checks of the marketplace, and they are the o
 ## What this shows
 
 - **An API test suite and end-to-end tests for a checkout.** The API suite checks the catalogue, search and accounts; the purchase is driven through the browser and checked through the API.
-- **A suite that does not depend on someone else's website.** CI runs against a stand in the repository; a nightly job only reports drift of the public site.
+- **A suite that does not depend on someone else's website.** CI runs against a stand in the repository; a separate nightly workflow only reports drift of the public site.
 - **Failures a developer can act on.** Every browser test keeps a video and a trace, and every run publishes an Allure report with a trend.
 
 ## How the checks are layered
@@ -54,7 +54,7 @@ Tests hold the assertions; everything reusable sits below them, so a change in t
 
 The suite runs, by default, against **the stand**: a small shop in [`stand/`](stand) with the same pages and the same REST API as the public demo site [Automation Exercise](https://www.automationexercise.com/) — registration and login, a catalogue with search, a cart, checkout and payment, and the API's `responseCode`-inside-HTTP-200 convention, form-encoded bodies and messages. It is a FastAPI application with one in-memory account store shared by the API and the browser session, and it is started by the suite itself when nothing answers on its port, so a clean clone runs green with no second terminal and no network.
 
-The public site is still there, one setting away (`TEST_ENV=prod`), and one CI job uses it: the nightly **drift check** runs the read-only smoke set — `-m "smoke and not destructive"`, which creates no account and places no order on somebody else's site — and never blocks the pipeline. That job keeps the page objects honest against the real markup; the stand keeps the pipeline honest against the code.
+The public site is still there, one setting away (`TEST_ENV=prod`), and one workflow of its own uses it: the **drift check** in [`drift.yml`](.github/workflows/drift.yml), scheduled nightly for 06:00 UTC and started by hand on request, runs the read-only smoke set — `-m "smoke and not destructive"`, which creates no account and places no order on somebody else's site. It is kept out of the CI workflow, so the badge and the published page never depend on somebody else's site, and it publishes nothing. When the site does not answer the runner, the run posts a notice and skips; it goes red only when the smoke set finds the site has changed under the page objects. That workflow keeps the page objects honest against the real markup; the stand keeps the pipeline honest against the code.
 
 ## Tech Stack
 
@@ -219,7 +219,7 @@ The engine is a setting (`BROWSER`, read into `Settings.browser`), so the whole 
 BROWSER=firefox pytest -m "ui or e2e"
 ```
 
-CI has a `browsers` job that does exactly that on all three engines, and it runs **only on manual dispatch** — not on a push, not on the schedule. No assertion here is about how a page renders in one engine versus another, so the second and third leg answer the question the first already answered, at three times the runner minutes. Whether the suite still runs on Firefox and WebKit is a question worth asking deliberately — after a Playwright upgrade, when a locator changes — which is when the button gets pressed.
+CI has a `browsers` job that does exactly that on all three engines, and it runs **only on manual dispatch** — not on a push, not on a pull request. No assertion here is about how a page renders in one engine versus another, so the second and third leg answer the question the first already answered, at three times the runner minutes. Whether the suite still runs on Firefox and WebKit is a question worth asking deliberately — after a Playwright upgrade, when a locator changes — which is when the button gets pressed.
 
 ## Related work
 

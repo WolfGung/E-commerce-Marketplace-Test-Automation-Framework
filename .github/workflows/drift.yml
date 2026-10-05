@@ -1,0 +1,90 @@
+name: Drift check
+
+# The one workflow that leaves this repository. The suite runs against the
+# stand in stand/, a copy of the public demo site the page objects were written
+# for; this checks, once a night and on request, that the copy has not drifted
+# from the original -- the same page objects, the same API client, the public
+# site, and only the cases that read. `smoke and not destructive` creates no
+# account and places no order on somebody else's site.
+#
+# It is a workflow of its own rather than a job in ci.yml so that what it finds
+# out about somebody else's site never colours the CI badge or holds back the
+# published page, both of which are about this code. For the same reason it
+# publishes nothing: no Pages permission, no deployment, nothing it could put
+# over the showcase ci.yml publishes.
+#
+# What may turn it red is a change on the public site that the smoke set
+# catches, and nothing else. A site that does not answer this runner -- down,
+# rate-limited, behind a challenge page for datacentre addresses -- is a notice
+# and a skip, not a failure: that says nothing about whether the stand still
+# matches it.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PUBLIC_SITE: https://www.automationexercise.com/
+
+jobs:
+  reachable:
+    name: Public site reachable from this runner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      status: ${{ steps.probe.outputs.status }}
+    steps:
+      - id: probe
+        name: Probe the public site
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$PUBLIC_SITE" || true)
+          echo "status=$code" >> "$GITHUB_OUTPUT"
+          echo "The public site answered HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::notice title=Drift check skipped::The public site answered HTTP $code from this runner (000 means no answer at all). The stand in this repository is what the suite runs against; the drift check against the public site is skipped this time rather than reported as failing."
+          fi
+
+  external:
+    name: Drift check against the public site
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: reachable
+    if: needs.reachable.outputs.status == '200'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install ".[stand]"
+      - name: Install Playwright browser
+        run: playwright install --with-deps chromium
+      - name: Run the non-destructive smoke set against the public site
+        # A failure is drift only if the site was still there to drift. The
+        # probe answered before the run; a site that stopped answering during
+        # it fails every case the same way drift would, so a red run asks the
+        # site once more, and when it no longer answers HTTP 200 the run ends
+        # with a notice instead of a failure. Anything else stays red.
+        run: |
+          status=0
+          pytest -m "smoke and not destructive" --alluredir=allure-results || status=$?
+          if [ "$status" -ne 0 ]; then
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$PUBLIC_SITE" || true)
+            if [ "$code" != "200" ]; then
+              echo "::notice title=Drift check inconclusive::The smoke set failed, and the public site now answers HTTP $code from this runner (000 means no answer at all). It went away during the run, so the failures say nothing about drift."
+              exit 0
+            fi
+          fi
+          exit "$status"
+        env:
+          TEST_ENV: prod
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results-external
+          path: allure-results

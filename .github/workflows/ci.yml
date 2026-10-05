@@ -1,11 +1,15 @@
 name: CI
 
+# Every job in this workflow runs against the stand this repository ships, so
+# its result is a fact about this code and nothing else: the README badge reads
+# it, and the showcase is published from it. The one check that reads somebody
+# else's site -- the drift check against the public demo site -- lives in
+# drift.yml, on its own schedule, so that site answering slowly or changing its
+# markup can colour neither the badge nor the page.
 on:
   push:
     branches: [main, master]
   pull_request:
-  schedule:
-    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       cross_browser:
@@ -26,7 +30,7 @@ permissions:
 jobs:
   api:
     name: API tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -60,7 +64,7 @@ jobs:
     # application and counts nothing else -- and results from this job would put
     # the framework's own cases into the figures it is meant to be guarding.
     name: Framework and stand checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -77,7 +81,7 @@ jobs:
 
   ui:
     name: UI and E2E tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
@@ -121,11 +125,11 @@ jobs:
   browsers:
     # The same browser suite on all three engines, and only when somebody asks
     # for it. `workflow_dispatch` is the only trigger that can reach this job,
-    # so a push, a pull request and the nightly schedule never start it -- and
-    # within a manual run it still waits for the `cross_browser` input, because
-    # the button is also how this pipeline gets re-run for reasons that have
-    # nothing to do with engines. A re-publication or a retry of a flaky leg
-    # would otherwise burn three times the runner minutes to learn nothing.
+    # so a push and a pull request never start it -- and within a manual run
+    # it still waits for the `cross_browser` input, because the button is also
+    # how this pipeline gets re-run for reasons that have nothing to do with
+    # engines. A re-publication or a retry of a flaky leg would otherwise burn
+    # three times the runner minutes to learn nothing.
     #
     # A matter of runner minutes, not of traffic against somebody else's site:
     # the suite now runs against the stand in this repository, so the cost of
@@ -143,7 +147,7 @@ jobs:
     # WebKit because Firefox failed would throw away the half of the answer
     # that is not yet known.
     name: Browser suite on ${{ matrix.browser }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     if: github.event_name == 'workflow_dispatch' && inputs.cross_browser
     strategy:
@@ -174,61 +178,9 @@ jobs:
           name: allure-results-${{ matrix.browser }}
           path: allure-results
 
-  reachable:
-    name: Public site reachable from this runner
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    outputs:
-      status: ${{ steps.probe.outputs.status }}
-    steps:
-      - id: probe
-        name: Probe the public site
-        run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://www.automationexercise.com/ || true)
-          echo "status=$code" >> "$GITHUB_OUTPUT"
-          echo "The public site answered HTTP $code"
-          if [ "$code" != "200" ]; then
-            echo "::notice title=Drift check skipped::The public site answered HTTP $code from this runner (000 means no answer at all). The stand in this repository is what the suite runs against; the drift check against the public site is skipped tonight rather than reported as failing."
-          fi
-
-  external:
-    # The drift check: the same suite, the public site the stand reproduces,
-    # and only the cases that read — `smoke and not destructive` creates no
-    # account and places no order on somebody else's site. Nightly and on
-    # request, never on a push; red here is information about the public
-    # site, not about this code, so it never blocks the pipeline or the
-    # publication.
-    name: Drift check against the public site
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: reachable
-    if: needs.reachable.outputs.status == '200'
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install dependencies
-        run: pip install ".[stand]"
-      - name: Install Playwright browser
-        run: playwright install --with-deps chromium
-      - name: Run the non-destructive smoke set against the public site
-        run: pytest -m "smoke and not destructive" --alluredir=allure-results
-        env:
-          TEST_ENV: prod
-      - name: Upload Allure results
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: allure-results-external
-          path: allure-results
-
   showcase:
     name: Publish showcase
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: [api, ui, framework]
     # Two gates, and no third one. The branch is gated here; the run being
@@ -236,15 +188,14 @@ jobs:
     # the browser suite and the framework's own checks have all passed — so a
     # red run cannot replace the published page with itself.
     #
-    # Which runs reach this job, then: a push to main; a nightly that came back
-    # green, which is the point of having one (a page still dated last week
-    # says nothing about a stand that answered fine this morning), and a red
-    # nightly still publishes nothing because `needs` is unchanged; and a
-    # manual dispatch from main, which is how anyone re-publishes by hand. A
-    # pull request never does — its `github.ref` is `refs/pull/<n>/merge`, not
-    # this branch. `external` is deliberately absent from `needs`: it probes a
-    # site this repository does not control, and a red drift check must never
-    # hold back a publication about the stand this repository does control.
+    # Which runs reach this job, then: a push to main, and a manual dispatch
+    # from main, which is how anyone re-publishes by hand. A pull request never
+    # does — its `github.ref` is `refs/pull/<n>/merge`, not this branch. The
+    # nightly run is not one of them any more. All it ever ran against this
+    # code's own stand was the suite the push had already passed, so the
+    # nightly is now the drift check alone, in drift.yml, and it publishes
+    # nothing: the page is renewed by the change that renews the code, and the
+    # date on it says which change that was.
     #
     # There used to be a third gate here, `github.event_name == 'push'`, and it
     # quietly made the "Run workflow" button do nothing for the one reason
@@ -264,7 +215,8 @@ jobs:
     # One publication at a time, from reading the report's history back off the
     # published site to deploying: two that overlapped would start from the
     # same history, and whichever deployed last would drop the other's run from
-    # the trend. A deployment under way is never cancelled.
+    # the trend. A deployment under way is never cancelled. Any other workflow
+    # that ever deploys to this site has to join the same group.
     concurrency:
       group: pages
       cancel-in-progress: false

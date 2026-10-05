@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 920" width="900" height="920"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1040" width="900" height="1040"
      role="img" aria-labelledby="ci-title ci-desc"
      font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
   <title id="ci-title">What CI does with every change</title>
-  <desc id="ci-desc">One workflow with four triggers: a push to main, a pull request, a nightly run at 06:00 UTC and a manual dispatch, whose form carries a cross-browser tick. Every trigger starts the same suites, and they all run against the stand — the small shop this repository ships, started by the suite itself — so not one of them waits on an answer from anywhere. The API suite, fourteen cases. The browser suite, ten cases selected by the ui or e2e markers, which also records the order and the Playwright trace of it. The framework's own checks, which run pytest over tests/unit and tests/stand — the pins that hold every number on this page, on the cover and in the README to what pytest collects, and the contract of the stand itself — and which write no Allure results on purpose. And, on a manual run with the cross-browser box ticked, those same ten browser cases again on chromium, firefox and webkit. One job is not about this code: nightly and on request, a probe asks the public demo site the stand reproduces for a status code with a thirty-second timeout, and when it answers HTTP 200 the drift check runs two cases against it — the smoke set without the cases that create an account or place an order. Red there is information about that site, so it never blocks the run; anything other than 200 and the check is skipped rather than failed, and the run posts a notice saying what answered. On main, and only once the API suite, the browser suite and the framework checks have all passed, the artefacts go on to restore the Allure history from the published site, generate the report, build this page from the run's own results and deploy it to GitHub Pages, which serves it. Because publication waits for those three, the page that is published always carries a complete passing run.</desc>
+  <desc id="ci-desc">Two workflows. The first, ci.yml, runs on a push to main, on a pull request and on a manual dispatch whose form carries a cross-browser tick, and every job in it runs against the stand — the small shop this repository ships, started by the suite itself — so not one of them waits on an answer from anywhere. The API suite, fourteen cases. The browser suite, ten cases selected by the ui or e2e markers, which also records the order and the Playwright trace of it. The framework's own checks, which run pytest over tests/unit and tests/stand — the pins that hold every number on this page, on the cover and in the README to what pytest collects, and the contract of the stand itself — and which write no Allure results on purpose. And, on a manual run with the cross-browser box ticked, those same ten browser cases again on chromium, firefox and webkit. On main, and only once the API suite, the browser suite and the framework checks have all passed, the artefacts go on to restore the Allure history from the published site, generate the report, build this page from the run's own results and deploy it to GitHub Pages, which serves it. Because publication waits for those three, the page that is published always carries a complete passing run. The second workflow, drift.yml, is the one that is not about this code: scheduled nightly for 06:00 UTC and also started by hand, a probe asks the public demo site the stand reproduces for a status code with a thirty-second timeout, and when it answers HTTP 200 the drift check runs two cases against it — the smoke set without the cases that create an account or place an order. Red there means the site has changed under the page objects; anything other than 200 and the check is skipped rather than failed, and the run posts a notice saying what answered. It publishes nothing, and its result colours neither the CI badge nor this page.</desc>
 
   <!-- The figure is referenced through <img>, so it cannot inherit a colour
        from the host page: it carries its own light plate and dark ink, and
@@ -22,6 +22,8 @@
     .m     { fill: #47525d; font-size: 12.5px; }
     .on-line { fill: #47525d; font-size: 12.5px;
                paint-order: stroke; stroke: #ffffff; stroke-width: 6px; stroke-linejoin: round; }
+    .on-zone { fill: #47525d; font-size: 12.5px;
+               paint-order: stroke; stroke: #f3f2ef; stroke-width: 6px; stroke-linejoin: round; }
     .arrow { stroke: #222a32; stroke-width: 1.8; fill: none; marker-end: url(#head); }
     .link  { stroke: #47525d; stroke-width: 1.6; fill: none; }
   </style>
@@ -31,144 +33,150 @@
     </marker>
   </defs>
 
-  <rect class="plate" x="0" y="0" width="900" height="920"/>
+  <rect class="plate" x="0" y="0" width="900" height="1040"/>
 
   <text class="h"   x="24" y="32">What CI does with every change</text>
-  <text class="sub" x="24" y="54">Four triggers, seven jobs. Every suite runs against the stand this repository ships; one job a night reads the public site it reproduces.</text>
+  <text class="sub" x="24" y="54">Two workflows. ci.yml runs every suite against the stand and publishes this page; drift.yml reads the public site, publishing nothing.</text>
 
-  <!-- ================= lane 1: every run ================= -->
-  <rect class="zone" x="24" y="78" width="852" height="500" rx="10"/>
+  <!-- ================= lane 1: every change, ci.yml ================= -->
+  <rect class="zone" x="24" y="78" width="852" height="318" rx="10"/>
 
-  <rect class="box" x="40" y="116" width="160" height="68" rx="8"/>
-  <text class="t2" x="120" y="144" text-anchor="middle">push to main</text>
-  <text class="m"  x="120" y="166" text-anchor="middle">or a pull request</text>
+  <rect class="box" x="40" y="116" width="196" height="68" rx="8"/>
+  <text class="t2" x="138" y="144" text-anchor="middle">push to main</text>
+  <text class="m"  x="138" y="166" text-anchor="middle">or a pull request</text>
 
-  <rect class="box" x="40" y="196" width="160" height="88" rx="8"/>
-  <text class="t2" x="120" y="224" text-anchor="middle">nightly 06:00 UTC</text>
-  <text class="m"  x="120" y="246" text-anchor="middle">cron 0 6 * * *</text>
-  <text class="m"  x="120" y="264" text-anchor="middle">the drift check, and</text>
-  <text class="m"  x="120" y="282" text-anchor="middle">a fresh publication</text>
+  <rect class="box" x="256" y="116" width="196" height="68" rx="8"/>
+  <text class="t2" x="354" y="144" text-anchor="middle">manual run</text>
+  <text class="m"  x="354" y="166" text-anchor="middle">workflow_dispatch</text>
 
-  <rect class="box" x="40" y="296" width="160" height="88" rx="8"/>
-  <text class="t2" x="120" y="324" text-anchor="middle">manual run</text>
-  <text class="m"  x="120" y="346" text-anchor="middle">workflow_dispatch</text>
-  <text class="m"  x="120" y="364" text-anchor="middle">ticking cross-browser</text>
-  <text class="m"  x="120" y="382" text-anchor="middle">adds the job below</text>
-
-  <path class="link" d="M200,150 L214,150"/>
-  <path class="link" d="M200,240 L214,240"/>
-  <path class="link" d="M200,340 L214,340"/>
-  <path class="link" d="M214,150 L214,340"/>
-
-  <!-- The one branch that leaves this repository, and the only job on the
-       figure that can be red without meaning anything about this code. -->
-  <rect class="box" x="246" y="196" width="180" height="86" rx="8"/>
-  <text class="t2" x="336" y="224" text-anchor="middle">probe the public site</text>
-  <text class="m"  x="336" y="246" text-anchor="middle">curl, 30 s timeout</text>
-  <text class="m"  x="336" y="264" text-anchor="middle">automationexercise.com</text>
-
-  <path class="gate" d="M516,195 L580,239 L516,283 L452,239 z"/>
-  <text class="b" x="516" y="244" text-anchor="middle">HTTP 200?</text>
-
-  <rect class="box dashed" x="636" y="158" width="200" height="120" rx="8"/>
-  <text class="t2" x="736" y="184" text-anchor="middle">drift check</text>
-  <text class="m"  x="736" y="206" text-anchor="middle">smoke and not destructive</text>
-  <text class="b"  x="736" y="228" text-anchor="middle">2 cases</text>
-  <text class="m"  x="736" y="250" text-anchor="middle">nightly · never on a push</text>
-  <text class="m"  x="736" y="268" text-anchor="middle">red here blocks nothing</text>
-
-  <rect class="box" x="636" y="296" width="200" height="76" rx="8"/>
-  <text class="t2" x="736" y="322" text-anchor="middle">skipped, not failed</text>
-  <text class="m"  x="736" y="344" text-anchor="middle">the run posts a ::notice</text>
-  <text class="m"  x="736" y="362" text-anchor="middle">saying what answered</text>
-
-  <path class="arrow" d="M214,239 L242,239"/>
-  <path class="arrow" d="M426,239 L448,239"/>
-  <path class="arrow" d="M580,239 L608,239 L608,218 L632,218"/>
-  <text class="on-line" x="600" y="232" text-anchor="middle">200</text>
-  <path class="arrow" d="M516,283 L516,334 L632,334"/>
-  <text class="on-line" x="566" y="327" text-anchor="middle">not 200</text>
+  <text class="m" x="480" y="136">Every suite runs against the stand this</text>
+  <text class="m" x="480" y="154">repository ships, started by the suite itself:</text>
+  <text class="m" x="480" y="172">no job here waits on an answer from anywhere.</text>
 
   <!-- Every job in the row below hangs off the trigger bus. They all run
        against the stand, which this pipeline starts itself, so not one of
        them waits on an answer from anywhere. -->
-  <path class="link" d="M214,340 L214,396 L782,396"/>
-  <path class="link" d="M214,396 L138,396"/>
-  <path class="arrow" d="M138,396 L138,420"/>
-  <path class="arrow" d="M354,396 L354,420"/>
-  <path class="arrow" d="M570,396 L570,420"/>
-  <path class="arrow" d="M782,396 L782,420"/>
+  <path class="link" d="M138,184 L138,212"/>
+  <path class="link" d="M354,184 L354,212"/>
+  <path class="link" d="M138,212 L782,212"/>
+  <path class="arrow" d="M138,212 L138,236"/>
+  <path class="arrow" d="M354,212 L354,236"/>
+  <path class="arrow" d="M570,212 L570,236"/>
+  <path class="arrow" d="M782,212 L782,236"/>
 
-  <rect class="box" x="40" y="424" width="196" height="126" rx="8"/>
-  <text class="t2" x="138" y="452" text-anchor="middle">API suite</text>
-  <text class="m"  x="138" y="474" text-anchor="middle">pytest -m api</text>
-  <text class="b"  x="138" y="496" text-anchor="middle">14 cases</text>
-  <text class="m"  x="138" y="518" text-anchor="middle">against the stand</text>
-  <text class="m"  x="138" y="536" text-anchor="middle">a failure is the result</text>
+  <rect class="box" x="40" y="240" width="196" height="126" rx="8"/>
+  <text class="t2" x="138" y="268" text-anchor="middle">API suite</text>
+  <text class="m"  x="138" y="290" text-anchor="middle">pytest -m api</text>
+  <text class="b"  x="138" y="312" text-anchor="middle">14 cases</text>
+  <text class="m"  x="138" y="334" text-anchor="middle">against the stand</text>
+  <text class="m"  x="138" y="352" text-anchor="middle">a failure is the result</text>
 
-  <rect class="box" x="256" y="424" width="196" height="126" rx="8"/>
-  <text class="t2" x="354" y="452" text-anchor="middle">framework + stand contract</text>
-  <text class="m"  x="354" y="474" text-anchor="middle">pytest tests/unit tests/stand</text>
-  <text class="m"  x="354" y="496" text-anchor="middle">the pins on every number</text>
-  <text class="m"  x="354" y="518" text-anchor="middle">the shop's own selectors</text>
-  <text class="m"  x="354" y="536" text-anchor="middle">writes no results</text>
+  <rect class="box" x="256" y="240" width="196" height="126" rx="8"/>
+  <text class="t2" x="354" y="268" text-anchor="middle">framework + stand contract</text>
+  <text class="m"  x="354" y="290" text-anchor="middle">pytest tests/unit tests/stand</text>
+  <text class="m"  x="354" y="312" text-anchor="middle">the pins on every number</text>
+  <text class="m"  x="354" y="334" text-anchor="middle">the shop's own selectors</text>
+  <text class="m"  x="354" y="352" text-anchor="middle">writes no results</text>
 
-  <rect class="box" x="472" y="424" width="196" height="126" rx="8"/>
-  <text class="t2" x="570" y="452" text-anchor="middle">browser suite</text>
-  <text class="m"  x="570" y="474" text-anchor="middle">pytest -m "ui or e2e"</text>
-  <text class="b"  x="570" y="496" text-anchor="middle">10 cases</text>
-  <text class="m"  x="570" y="518" text-anchor="middle">against the stand</text>
-  <text class="m"  x="570" y="536" text-anchor="middle">records the order</text>
+  <rect class="box" x="472" y="240" width="196" height="126" rx="8"/>
+  <text class="t2" x="570" y="268" text-anchor="middle">browser suite</text>
+  <text class="m"  x="570" y="290" text-anchor="middle">pytest -m "ui or e2e"</text>
+  <text class="b"  x="570" y="312" text-anchor="middle">10 cases</text>
+  <text class="m"  x="570" y="334" text-anchor="middle">against the stand</text>
+  <text class="m"  x="570" y="352" text-anchor="middle">records the order</text>
 
-  <rect class="box" x="688" y="424" width="188" height="126" rx="8"/>
-  <text class="t2" x="782" y="452" text-anchor="middle">cross-browser suite</text>
-  <text class="m"  x="782" y="474" text-anchor="middle">the same selection</text>
-  <text class="b"  x="782" y="496" text-anchor="middle">10 cases</text>
-  <text class="m"  x="782" y="518" text-anchor="middle">chromium · firefox · webkit</text>
-  <text class="m"  x="782" y="536" text-anchor="middle">manual run, tick required</text>
+  <rect class="box" x="688" y="240" width="188" height="126" rx="8"/>
+  <text class="t2" x="782" y="268" text-anchor="middle">cross-browser suite</text>
+  <text class="m"  x="782" y="290" text-anchor="middle">the same selection</text>
+  <text class="b"  x="782" y="312" text-anchor="middle">10 cases</text>
+  <text class="m"  x="782" y="334" text-anchor="middle">chromium · firefox · webkit</text>
+  <text class="m"  x="782" y="352" text-anchor="middle">manual run, tick required</text>
 
   <!-- ================= the bridge: what the run leaves behind ================= -->
-  <rect class="box" x="290" y="612" width="360" height="76" rx="8"/>
-  <text class="t2" x="470" y="638" text-anchor="middle">what the run leaves behind</text>
-  <text class="m"  x="470" y="660" text-anchor="middle">allure-results-api · allure-results-ui</text>
-  <text class="m"  x="470" y="678" text-anchor="middle">the video of the order, and the Playwright trace of it</text>
+  <rect class="box" x="290" y="420" width="360" height="76" rx="8"/>
+  <text class="t2" x="470" y="446" text-anchor="middle">what the run leaves behind</text>
+  <text class="m"  x="470" y="468" text-anchor="middle">allure-results-api · allure-results-ui</text>
+  <text class="m"  x="470" y="486" text-anchor="middle">the video of the order, and the Playwright trace of it</text>
 
-  <path class="arrow" d="M138,552 L138,588 L330,588 L330,608"/>
-  <path class="arrow" d="M570,552 L570,588 L610,588 L610,608"/>
+  <path class="arrow" d="M138,368 L138,400 L330,400 L330,416"/>
+  <path class="arrow" d="M570,368 L570,400 L610,400 L610,416"/>
 
   <!-- ================= lane 2: the same run publishes itself ================= -->
-  <rect class="zone" x="24" y="712" width="852" height="180" rx="10"/>
+  <rect class="zone" x="24" y="520" width="852" height="188" rx="10"/>
 
-  <rect class="box" x="40" y="752" width="192" height="112" rx="8"/>
-  <text class="t2" x="136" y="780" text-anchor="middle">restore the history</text>
-  <text class="m"  x="136" y="802" text-anchor="middle">from the published site</text>
-  <text class="m"  x="136" y="820" text-anchor="middle">so the trend survives</text>
-  <text class="m"  x="136" y="838" text-anchor="middle">the run that renews it</text>
+  <rect class="box" x="40" y="560" width="192" height="120" rx="8"/>
+  <text class="t2" x="136" y="588" text-anchor="middle">restore the history</text>
+  <text class="m"  x="136" y="610" text-anchor="middle">from the published site</text>
+  <text class="m"  x="136" y="628" text-anchor="middle">so the trend survives</text>
+  <text class="m"  x="136" y="646" text-anchor="middle">the run that renews it</text>
 
-  <rect class="box" x="252" y="752" width="192" height="112" rx="8"/>
-  <text class="t2" x="348" y="780" text-anchor="middle">generate the report</text>
-  <text class="m"  x="348" y="802" text-anchor="middle">Allure, over this run</text>
-  <text class="m"  x="348" y="820" text-anchor="middle">and the ones before</text>
+  <rect class="box" x="252" y="560" width="192" height="120" rx="8"/>
+  <text class="t2" x="348" y="588" text-anchor="middle">generate the report</text>
+  <text class="m"  x="348" y="610" text-anchor="middle">Allure, over this run</text>
+  <text class="m"  x="348" y="628" text-anchor="middle">and the ones before</text>
 
-  <rect class="box" x="464" y="752" width="192" height="112" rx="8"/>
-  <text class="t2" x="560" y="780" text-anchor="middle">build this page</text>
-  <text class="m"  x="560" y="802" text-anchor="middle">showcase/build.py, from</text>
-  <text class="m"  x="560" y="820" text-anchor="middle">the run's own results</text>
+  <rect class="box" x="464" y="560" width="192" height="120" rx="8"/>
+  <text class="t2" x="560" y="588" text-anchor="middle">build this page</text>
+  <text class="m"  x="560" y="610" text-anchor="middle">showcase/build.py, from</text>
+  <text class="m"  x="560" y="628" text-anchor="middle">the run's own results</text>
 
-  <rect class="box" x="676" y="752" width="192" height="112" rx="8"/>
-  <text class="t2" x="772" y="780" text-anchor="middle">deploy to Pages</text>
-  <text class="m"  x="772" y="802" text-anchor="middle">GitHub Pages serves</text>
-  <text class="m"  x="772" y="820" text-anchor="middle">the page and the report</text>
+  <rect class="box" x="676" y="560" width="192" height="120" rx="8"/>
+  <text class="t2" x="772" y="588" text-anchor="middle">deploy to Pages</text>
+  <text class="m"  x="772" y="610" text-anchor="middle">GitHub Pages serves</text>
+  <text class="m"  x="772" y="628" text-anchor="middle">the page and the report</text>
 
-  <path class="arrow" d="M232,808 L248,808"/>
-  <path class="arrow" d="M444,808 L460,808"/>
-  <path class="arrow" d="M656,808 L672,808"/>
+  <path class="arrow" d="M232,620 L248,620"/>
+  <path class="arrow" d="M444,620 L460,620"/>
+  <path class="arrow" d="M656,620 L672,620"/>
 
-  <path class="arrow" d="M470,690 L470,702 L136,702 L136,748"/>
-  <text class="m" x="486" y="706">on main, once all three suites are green</text>
+  <path class="arrow" d="M470,498 L470,510 L136,510 L136,556"/>
+  <text class="m" x="486" y="514">on main, once all three suites are green</text>
+
+  <!-- ================= lane 3: drift.yml, the one workflow that leaves ================= -->
+  <rect class="zone" x="24" y="736" width="852" height="278" rx="10"/>
+
+  <rect class="box" x="40" y="812" width="160" height="100" rx="8"/>
+  <text class="t2" x="120" y="840" text-anchor="middle">nightly 06:00 UTC</text>
+  <text class="m"  x="120" y="862" text-anchor="middle">cron 0 6 * * *</text>
+  <text class="m"  x="120" y="880" text-anchor="middle">or a manual run</text>
+  <text class="m"  x="120" y="898" text-anchor="middle">workflow_dispatch</text>
+
+  <!-- The one branch that leaves this repository, and the only workflow on
+       the figure whose red is about somebody else's site. -->
+  <rect class="box" x="246" y="818" width="180" height="86" rx="8"/>
+  <text class="t2" x="336" y="846" text-anchor="middle">probe the public site</text>
+  <text class="m"  x="336" y="868" text-anchor="middle">curl, 30 s timeout</text>
+  <text class="m"  x="336" y="886" text-anchor="middle">automationexercise.com</text>
+
+  <path class="gate" d="M516,817 L580,861 L516,905 L452,861 z"/>
+  <text class="b" x="516" y="866" text-anchor="middle">HTTP 200?</text>
+
+  <rect class="box dashed" x="636" y="780" width="200" height="120" rx="8"/>
+  <text class="t2" x="736" y="806" text-anchor="middle">drift check</text>
+  <text class="m"  x="736" y="828" text-anchor="middle">smoke and not destructive</text>
+  <text class="b"  x="736" y="850" text-anchor="middle">2 cases</text>
+  <text class="m"  x="736" y="872" text-anchor="middle">red means the site changed</text>
+  <text class="m"  x="736" y="890" text-anchor="middle">publishes nothing</text>
+
+  <rect class="box" x="636" y="918" width="200" height="76" rx="8"/>
+  <text class="t2" x="736" y="944" text-anchor="middle">skipped, not failed</text>
+  <text class="m"  x="736" y="966" text-anchor="middle">the run posts a ::notice</text>
+  <text class="m"  x="736" y="984" text-anchor="middle">saying what answered</text>
+
+  <path class="arrow" d="M200,861 L242,861"/>
+  <path class="arrow" d="M426,861 L448,861"/>
+  <path class="arrow" d="M580,861 L608,861 L608,840 L632,840"/>
+  <text class="on-zone" x="600" y="854" text-anchor="middle">200</text>
+  <path class="arrow" d="M516,905 L516,956 L632,956"/>
+  <text class="on-zone" x="566" y="949" text-anchor="middle">not 200</text>
+
+  <text class="m" x="40" y="950">A workflow of its own: what it finds out about</text>
+  <text class="m" x="40" y="968">somebody else's site colours neither the CI</text>
+  <text class="m" x="40" y="986">badge nor this page.</text>
+
   <!-- Painted last, over a knockout of the lane's own fill: a connector that
        crosses a word passes behind it rather than through it. -->
-  <text class="lab" x="40" y="100">EVERY RUN — GITHUB ACTIONS, .github/workflows/ci.yml</text>
-  <text class="lab" x="246" y="136">NIGHTLY AND ON REQUEST — THE ONE BRANCH THAT LEAVES</text>
-  <text class="lab" x="40" y="734">ON main ONLY — AND ONLY AFTER ALL THREE SUITES PASSED</text>
+  <text class="lab" x="40" y="100">EVERY CHANGE — GITHUB ACTIONS, .github/workflows/ci.yml</text>
+  <text class="lab" x="40" y="542">ON main ONLY — AND ONLY AFTER ALL THREE SUITES PASSED</text>
+  <text class="lab" x="40" y="758">NIGHTLY AND ON REQUEST — .github/workflows/drift.yml, THE ONE THAT LEAVES</text>
 </svg>
