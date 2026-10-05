@@ -145,6 +145,24 @@ def test_the_publication_waits_for_every_suite_and_publishes_from_main_only() ->
     assert job["if"] == "github.ref == 'refs/heads/main'"
 
 
+def test_the_publication_never_puts_an_older_commit_over_a_newer_one() -> None:
+    """Runs finish out of order, and a re-run builds its old commit.
+
+    The job asks which commit main is at before it builds anything, and every
+    step from the checkout to the deployment waits for that answer. A step
+    without the condition would run on a stale commit; a check placed after
+    the deployment would come too late to matter.
+    """
+    steps = JOBS["showcase"]["steps"]
+    check = steps[0]
+    assert check.get("id") == "current", "the first step of `showcase` is the head-of-main check"
+    assert "git/ref/heads/main" in check["run"] and "RUN_SHA" in check["run"]
+    assert check["env"]["RUN_SHA"] == "${{ github.sha }}"
+    condition = "steps.current.outputs.current == 'true'"
+    unguarded = [step.get("name") or step.get("uses") for step in steps[1:] if step.get("if") != condition]
+    assert not unguarded, f"steps of `showcase` that run whatever main is at: {unguarded}"
+
+
 # -- drift.yml: the one workflow that leaves ------------------------------------
 
 

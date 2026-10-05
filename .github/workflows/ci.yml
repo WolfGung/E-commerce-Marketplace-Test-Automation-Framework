@@ -204,7 +204,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     # The site goes to GitHub Pages as an artifact of this run. No branch is
     # written, so nothing is force-pushed, and nothing piles up from one
-    # publication to the next; `contents: read` is for the checkout.
+    # publication to the next; `contents: read` is for the checkout and for
+    # asking which commit main is at.
     permissions:
       contents: read
       pages: write
@@ -221,36 +222,67 @@ jobs:
       group: pages
       cancel-in-progress: false
     steps:
+      # Not a gate on which runs reach this job, but on whether this one still
+      # has anything to publish. Runs finish out of order -- a push made a
+      # minute after another can pass its suites first and publish first --
+      # and a re-run of an old run builds the old commit. Either would put an
+      # older page over a newer one, and the trend read back from it would lose
+      # the newer run as well. So the job publishes only while its own commit
+      # is still the head of main, and otherwise stops here with a notice and a
+      # green check: the newer commit's own run is the one that publishes.
+      # Publications are serialised by the `pages` group above, so a commit
+      # pushed after this check publishes after this job, not before it.
+      - id: current
+        name: Check this commit is still the head of main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_SHA: ${{ github.sha }}
+        run: |
+          head=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          if [ "$head" = "$RUN_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Publication skipped::This run built ${RUN_SHA:0:7}, but main is at ${head:0:7} now. The run of that commit publishes; this one does not put an older page over it."
+          fi
       # No git runs after the checkout, so the token is not left in .git/config
       # for the steps below.
       - uses: actions/checkout@v7
+        if: steps.current.outputs.current == 'true'
         with:
           persist-credentials: false
       # The build needs Python's standard library and nothing installed: with
       # the Pages token in this job, the pinned Allure command line is the only
       # third-party code it runs. The script's tests hold the build to that.
       - uses: actions/setup-python@v7
+        if: steps.current.outputs.current == 'true'
         with:
           python-version: "3.12"
       - uses: actions/download-artifact@v8
+        if: steps.current.outputs.current == 'true'
         with:
           name: allure-results-api
           path: allure-results-api
       - uses: actions/download-artifact@v8
+        if: steps.current.outputs.current == 'true'
         with:
           name: allure-results-ui
           path: allure-results-ui
       - uses: actions/download-artifact@v8
+        if: steps.current.outputs.current == 'true'
         continue-on-error: true
         with:
           name: videos
           path: videos
       - uses: actions/download-artifact@v8
+        if: steps.current.outputs.current == 'true'
         continue-on-error: true
         with:
           name: traces
           path: traces
       - name: Assemble the site
+        if: steps.current.outputs.current == 'true'
         # Builds `site/` and stops: the report, its trend read back from
         # `SITE_URL`, the page, the diagrams and the media. Nothing is pushed.
         run: bash scripts/build-showcase.sh allure-results-api allure-results-ui videos traces
@@ -258,7 +290,9 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SITE_URL: https://wolfgung.github.io/Marketplace-Test-Automation-Framework/
       - uses: actions/upload-pages-artifact@v5
+        if: steps.current.outputs.current == 'true'
         with:
           path: site
       - id: deployment
+        if: steps.current.outputs.current == 'true'
         uses: actions/deploy-pages@v5
