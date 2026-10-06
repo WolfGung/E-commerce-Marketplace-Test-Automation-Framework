@@ -1,6 +1,6 @@
 # Marketplace Test Automation Framework
 
-A test automation framework built from scratch for an online shop: API and browser tests run in CI against a stand shipped in this repository.
+API and browser tests that run in CI against a copy of a public demo shop kept in this repository, with a nightly check that the copy still matches the original.
 
 [![CI](https://github.com/WolfGung/Marketplace-Test-Automation-Framework/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/WolfGung/Marketplace-Test-Automation-Framework/actions/workflows/ci.yml?query=branch%3Amain+event%3Apush)
 [![live report](https://img.shields.io/badge/live%20report-Allure-brightgreen)](https://wolfgung.github.io/Marketplace-Test-Automation-Framework/report/)
