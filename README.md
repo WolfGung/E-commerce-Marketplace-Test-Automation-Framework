@@ -26,7 +26,7 @@ The rows above the stand's are the checks of the marketplace, and they are the o
 
 - **An API test suite and end-to-end tests for a checkout.** The API suite checks the catalogue, search and accounts; the purchase is driven through the browser and checked through the API.
 - **A suite that does not depend on someone else's website.** CI runs against a stand in the repository; a separate nightly workflow only reports drift of the public site.
-- **Failures a developer can act on.** Every browser test keeps a video and a trace, and every run publishes an Allure report with a trend.
+- **Failures a developer can act on.** Each end-to-end test is recorded as a video and a Playwright trace in CI, a failing browser test leaves a screenshot and its HTML, and every run publishes an Allure report with a trend.
 
 ## How the checks are layered
 
